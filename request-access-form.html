@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GitHub Repository Access Request</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .container {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+        padding: 40px;
+        width: 100%;
+        max-width: 500px;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .header h1 {
+        color: #333;
+        font-size: 28px;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+
+      .header p {
+        color: #666;
+        font-size: 16px;
+      }
+
+      .form-group {
+        margin-bottom: 24px;
+      }
+
+      label {
+        display: block;
+        color: #333;
+        font-weight: 500;
+        margin-bottom: 8px;
+        font-size: 14px;
+      }
+
+      input[type="email"],
+      input[type="text"],
+      select {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e1e5e9;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: border-color 0.3s ease;
+        background: white;
+      }
+
+      input[type="email"]:focus,
+      input[type="text"]:focus,
+      select:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+
+      .submit-btn {
+        width: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 14px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+      }
+
+      .submit-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .result {
+        margin-top: 24px;
+        padding: 16px;
+        border-radius: 8px;
+        font-weight: 500;
+        display: none;
+      }
+
+      .result.success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+
+      .result.error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+
+      .loading {
+        display: none;
+        text-align: center;
+        margin-top: 16px;
+      }
+
+      .spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .help-text {
+        font-size: 12px;
+        color: #666;
+        margin-top: 4px;
+      }
+
+      .repo-info {
+        background: #f8f9fa;
+        padding: 16px;
+        border-radius: 8px;
+        margin-bottom: 24px;
+      }
+
+      .repo-info h3 {
+        color: #333;
+        font-size: 16px;
+        margin-bottom: 8px;
+      }
+
+      .repo-info p {
+        color: #666;
+        font-size: 14px;
+        margin: 4px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🔐 Repository Access Request</h1>
+        <p>Request access to the GitHub repository</p>
+      </div>
+      <div class="repo-info">
+        <h3>📚 Repository Details</h3>
+        <p><strong>Owner:</strong> AlmogShKt</p>
+        <p><strong>Repository:</strong> FindTestNumberPDF</p>
+        <p><strong>Permission:</strong> Pull access (read-only)</p>
+      </div>
+
+      <form id="accessForm">
+        <div class="form-group">
+          <label for="email">Email Address *</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            required
+            placeholder="your.email@example.com"
+          />
+          <div class="help-text">
+            We'll use this to contact you about your access request
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="github_username">GitHub Username *</label>
+          <input
+            type="text"
+            id="github_username"
+            name="github_username"
+            required
+            placeholder="your-github-username"
+          />
+          <div class="help-text">
+            Your exact GitHub username (case-sensitive)
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="permission">Permission Level</label>
+          <select id="permission" name="permission">
+            <option value="pull">Pull (Read-only) - Default</option>
+            <option value="triage">Triage (Read + Issues)</option>
+            <option value="push">Push (Read + Write)</option>
+            <option value="maintain">Maintain (Read + Write + Settings)</option>
+            <option value="admin">Admin (Full access)</option>
+          </select>
+          <div class="help-text">Most users should use "Pull" access</div>
+        </div>
+
+        <button type="submit" class="submit-btn" id="submitBtn">
+          Request Access
+        </button>
+      </form>
+
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Processing your request...</p>
+      </div>
+
+      <div class="result" id="result"></div>
+    </div>
+
+    <script>
+      document
+        .getElementById("accessForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const submitBtn = document.getElementById("submitBtn");
+          const loading = document.getElementById("loading");
+          const result = document.getElementById("result");
+
+          // Get form data
+          const formData = new FormData(e.target);
+          const data = {
+            email: formData.get("email"),
+            github_username: formData.get("github_username"),
+            permission: formData.get("permission"),
+          };
+
+          // Show loading state
+          submitBtn.disabled = true;
+          loading.style.display = "block";
+          result.style.display = "none";
+
+          try {
+            const response = await fetch(
+              "https://repo-access-func-v4.azurewebsites.net/api/request-access",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+              }
+            );
+
+            const responseData = await response.json();
+
+            // Hide loading
+            loading.style.display = "none";
+
+            if (response.ok) {
+              // Success
+              result.className = "result success";
+              result.innerHTML = `
+                        <strong>✅ Success!</strong><br>
+                        ${
+                          responseData.message ||
+                          "Your access request has been processed successfully."
+                        }
+                    `;
+            } else {
+              // Error
+              result.className = "result error";
+              result.innerHTML = `
+                        <strong>❌ Error:</strong><br>
+                        ${
+                          responseData.message ||
+                          "Something went wrong. Please try again."
+                        }
+                    `;
+            }
+
+            result.style.display = "block";
+          } catch (error) {
+            // Network error
+            loading.style.display = "none";
+            result.className = "result error";
+            result.innerHTML = `
+                    <strong>❌ Network Error:</strong><br>
+                    Unable to connect to the server. Please check your internet connection and try again.
+                `;
+            result.style.display = "block";
+          } finally {
+            submitBtn.disabled = false;
+          }
+        });
+
+      // Auto-format GitHub username (remove @ if present)
+      document
+        .getElementById("github_username")
+        .addEventListener("input", function (e) {
+          let value = e.target.value;
+          if (value.startsWith("@")) {
+            e.target.value = value.substring(1);
+          }
+        });
+    </script>
+  </body>
+</html>

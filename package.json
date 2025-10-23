@@ -1,0 +1,23 @@
+{
+  "name": "azure-functions-repo-access",
+  "version": "1.0.0",
+  "description": "Azure Function for managing GitHub repository access requests",
+  "main": "dist/functions/*.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "npm run build && func start",
+    "dev": "tsc --watch",
+    "test": "echo \"No tests yet...\""
+  },
+  "dependencies": {
+    "@azure/data-tables": "^13.3.1",
+    "@azure/functions": "^4.0.0",
+    "octokit": "^5.0.3",
+    "zod": "^4.0.17"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "azure-functions-core-tools": "^4.x",
+    "typescript": "^5.9.2"
+  }
+}

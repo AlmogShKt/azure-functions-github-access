@@ -1,0 +1,69 @@
+bin
+obj
+csx
+.vs
+edge
+Publish
+
+*.user
+*.suo
+*.cscfg
+*.Cache
+project.lock.json
+
+/packages
+/TestResults
+
+/tools/NuGet.exe
+/App_Data
+/secrets
+/data
+.secrets
+
+# Node.js dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Azure Functions local settings (contains secrets)
+local.settings.json
+
+# TypeScript build output
+dist/
+*.js.map
+
+# Environment variables
+.env
+.env.local
+
+# OS generated files
+.DS_Store
+Thumbs.db
+appsettings.json
+local.settings.json
+
+node_modules
+dist
+
+# Local python packages
+.python_packages/
+
+# Python Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Azurite artifacts
+__blobstorage__
+__queuestorage__
+__azurite_db*__.json
