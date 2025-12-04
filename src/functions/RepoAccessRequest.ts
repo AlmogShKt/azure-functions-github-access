@@ -10,7 +10,6 @@ import { z } from "zod";
 
 // ----- Config (env variables) -----
 const GH_OWNER = process.env.GH_OWNER!;
-const GH_REPO = process.env.GH_REPO!;
 const GH_PERMISSION = process.env.GH_PERMISSION || "pull";
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN!; // local: in local.settings.json; Azure: via Key Vault reference
 const TABLE_CONN = process.env.TABLE_CONN!;
@@ -20,6 +19,7 @@ const TABLE_NAME = process.env.TABLE_NAME || "Entitlements";
 const ReqSchema = z.object({
   email: z.string().email(),
   github_username: z.string().min(1),
+  repository: z.string().min(1),
   permission: z
     .enum(["pull", "triage", "push", "maintain", "admin"])
     .optional(),
@@ -79,25 +79,67 @@ const octokit = new Octokit({
   userAgent: "repo-access-minimal/1.0",
 });
 
-async function inviteCollaborator(username: string, permission: string) {
+async function inviteCollaborator(
+  username: string,
+  permission: string,
+  repository: string,
+  context: InvocationContext
+) {
+  context.log(
+    `🚀 Inviting user @${username} to ${GH_OWNER}/${repository} with permission: ${permission}`
+  );
+
   const resp = await octokit.request(
     "PUT /repos/{owner}/{repo}/collaborators/{username}",
     {
       owner: GH_OWNER,
-      repo: GH_REPO,
+      repo: repository,
       username,
       permission,
     }
   );
+
+  context.log(`✅ GitHub API response status: ${resp.status}`);
   return resp.status; // 201/202/204
 }
 
-async function listInvitations() {
+async function listInvitations(repository: string) {
   const resp = await octokit.request("GET /repos/{owner}/{repo}/invitations", {
     owner: GH_OWNER,
-    repo: GH_REPO,
+    repo: repository,
   });
   return resp.data;
+}
+
+async function NotifyNewAccessRequest(
+  email?: string,
+  github_username?: string,
+  repository?: string,
+  error?: string
+) {
+  const URL =
+    "https://prod-16.northcentralus.logic.azure.com:443/workflows/ed749d7068be4b4a933b9ea97ff2a10b/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=kh3oaiTuMcZ0Ss4yA0DcKZvIR8qUB89A6M1WBq0INdI";
+
+  if (error) {
+    await fetch(URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        error: error,
+      }),
+    });
+    return;
+  }
+
+  await fetch(URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: email,
+      github_username: github_username,
+      repository: repository,
+    }),
+  });
 }
 
 // ----- HTTP Function -----
@@ -115,11 +157,20 @@ export async function handler(
       };
     }
 
-    const { email, github_username } = parsed.data;
+    const { email, github_username, repository } = parsed.data;
     const permission = parsed.data.permission ?? GH_PERMISSION;
 
-    const partitionKey = GH_REPO; // single-repo MVP
-    const rowKey = github_username.trim();
+    ctx.log(`📥 Received request:`, {
+      email,
+      github_username,
+      repository,
+      permission,
+    });
+
+    const partitionKey: string = repository; // single-repo MVP
+    const rowKey: string = github_username.trim();
+
+    ctx.log(`🔑 Using repository: ${repository} (from request data)`);
 
     // Idempotency: already invited/active?
     const existing = await getEnt(partitionKey, rowKey);
@@ -146,11 +197,18 @@ export async function handler(
       source: "form",
     });
 
+    ctx.log(`📝 Saved pending request for @${rowKey} to access ${repository}`);
+
     // Call GitHub
-    const status = await inviteCollaborator(rowKey, permission);
+    const status = await inviteCollaborator(
+      rowKey,
+      permission,
+      repository,
+      ctx
+    );
 
     // Determine final state
-    const invites = await listInvitations();
+    const invites = await listInvitations(repository);
     const pending = invites.find(
       (i: any) => i.invitee?.login?.toLowerCase() === rowKey.toLowerCase()
     );
@@ -176,12 +234,26 @@ export async function handler(
         status: "active",
         permission,
       });
+
+      await NotifyNewAccessRequest(
+        email,
+        github_username,
+        repository,
+        undefined
+      );
+
       return {
         status: 200,
         jsonBody: { status: "ok", message: `@${rowKey} has access.` },
       };
     }
   } catch (err: any) {
+    NotifyNewAccessRequest(
+      undefined,
+      undefined,
+      undefined,
+      err?.message ?? "Unexpected error"
+    );
     if (err.status === 401 || err.status === 403) {
       return {
         status: 400,

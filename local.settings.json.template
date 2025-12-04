@@ -1,0 +1,13 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "GITHUB_TOKEN": "your-github-personal-access-token",
+    "GH_OWNER": "your-github-username",
+    "GH_REPO": "your-repository-name",
+    "GH_PERMISSION": "pull",
+    "TABLE_CONN": "your-azure-storage-connection-string",
+    "TABLE_NAME": "Entitlements"
+  }
+}
