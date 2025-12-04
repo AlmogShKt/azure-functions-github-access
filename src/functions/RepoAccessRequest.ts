@@ -120,25 +120,14 @@ async function NotifyNewAccessRequest(
   const URL =
     "https://prod-16.northcentralus.logic.azure.com:443/workflows/ed749d7068be4b4a933b9ea97ff2a10b/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=kh3oaiTuMcZ0Ss4yA0DcKZvIR8qUB89A6M1WBq0INdI";
 
-  if (error) {
-    await fetch(URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        error: error,
-      }),
-    });
-    return;
-  }
+  const payload = error
+    ? { error }
+    : { email, github_username, repository, status: "success" };
 
   await fetch(URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email: email,
-      github_username: github_username,
-      repository: repository,
-    }),
+    body: JSON.stringify(payload),
   });
 }
 
@@ -178,6 +167,7 @@ export async function handler(
       existing &&
       (existing.status === "active" || existing.status === "invited")
     ) {
+      await NotifyNewAccessRequest(email, github_username, repository);
       return {
         status: 200,
         jsonBody: {
@@ -222,6 +212,7 @@ export async function handler(
         permission,
         invitation_id: String(pending.id),
       });
+      await NotifyNewAccessRequest(email, github_username, repository);
       return {
         status: 200,
         jsonBody: { status: "ok", message: `Invitation sent to @${rowKey}.` },
@@ -235,12 +226,7 @@ export async function handler(
         permission,
       });
 
-      await NotifyNewAccessRequest(
-        email,
-        github_username,
-        repository,
-        undefined
-      );
+      await NotifyNewAccessRequest(email, github_username, repository);
 
       return {
         status: 200,
@@ -248,7 +234,7 @@ export async function handler(
       };
     }
   } catch (err: any) {
-    NotifyNewAccessRequest(
+    await NotifyNewAccessRequest(
       undefined,
       undefined,
       undefined,
